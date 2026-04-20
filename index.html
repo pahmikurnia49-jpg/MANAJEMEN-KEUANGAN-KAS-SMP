@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Kas Sekolah</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+    <div id="login-container" class="view-section">
+        <div class="login-box">
+            <h2><i class="fas fa-school"></i> Login Bendahara</h2>
+            <p>Sistem Kas Keuangan Sekolah</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="login-username" required placeholder="Masukkan admin">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" required placeholder="Masukkan admin123">
+                </div>
+                <button type="submit" class="btn-primary">Masuk</button>
+                <a href="#" id="forgot-password">Lupa Password?</a>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-container" class="view-section hidden">
+        <header>
+            <div class="header-title">
+                <h2><i class="fas fa-wallet"></i> Manajemen Kas Sekolah</h2>
+            </div>
+            <div class="header-actions">
+                <button id="toggle-dark-mode" class="btn-icon" title="Mode Gelap"><i class="fas fa-moon"></i></button>
+                <button id="btn-logout" class="btn-danger"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="summary-cards">
+                <div class="card income">
+                    <h3>Total Pemasukan</h3>
+                    <h2 id="total-income">Rp 0</h2>
+                </div>
+                <div class="card expense">
+                    <h3>Total Pengeluaran</h3>
+                    <h2 id="total-expense">Rp 0</h2>
+                </div>
+                <div class="card balance">
+                    <h3>Saldo Akhir</h3>
+                    <h2 id="total-balance">Rp 0</h2>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="left-col">
+                    <div class="form-container box-panel">
+                        <h3 id="form-title">Tambah Transaksi</h3>
+                        <form id="transaction-form">
+                            <input type="hidden" id="edit-id">
+                            <div class="input-group">
+                                <label>Jenis Transaksi</label>
+                                <select id="type" required>
+                                    <option value="pemasukan">Pemasukan</option>
+                                    <option value="pengeluaran">Pengeluaran</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Tanggal</label>
+                                <input type="date" id="date" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Keterangan</label>
+                                <input type="text" id="description" required placeholder="Contoh: Pembayaran SPP">
+                            </div>
+                            <div class="input-group">
+                                <label>Jumlah Uang (Rp)</label>
+                                <input type="number" id="amount" required min="1" placeholder="Contoh: 50000">
+                            </div>
+                            <div class="input-group">
+                                <label>Kategori</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <select id="category" required></select>
+                                    <button type="button" id="btn-add-category" class="btn-secondary" title="Tambah Kategori">+</button>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Nama Penyetor / Penerima</label>
+                                <input type="text" id="person" required placeholder="Nama orang terkait">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary" id="btn-save">Simpan Data</button>
+                                <button type="button" class="btn-secondary" id="btn-cancel-edit" style="display:none;">Batal Edit</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="chart-container box-panel">
+                        <h3>Grafik Kas</h3>
+                        <canvas id="kasChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="right-col box-panel">
+                    <h3>Daftar Transaksi</h3>
+                    <div class="toolbar">
+                        <input type="text" id="search-input" placeholder="Cari keterangan / nama...">
+                        <select id="filter-type">
+                            <option value="semua">Semua Transaksi</option>
+                            <option value="pemasukan">Hanya Pemasukan</option>
+                            <option value="pengeluaran">Hanya Pengeluaran</option>
+                        </select>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="transaction-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Keterangan</th>
+                                    <th>Kategori</th>
+                                    <th>Orang</th>
+                                    <th>Pemasukan</th>
+                                    <th>Pengeluaran</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                </tbody>
+                        </table>
+                    </div>
+
+                    <div class="export-tools">
+                        <h4>Tools & Backup</h4>
+                        <div class="tools-buttons">
+                            <button id="btn-export-excel" class="btn-action excel"><i class="fas fa-file-excel"></i> Excel</button>
+                            <button id="btn-export-pdf" class="btn-action pdf"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button id="btn-backup-json" class="btn-action backup"><i class="fas fa-download"></i> Backup (JSON)</button>
+                            
+                            <input type="file" id="file-restore" accept=".json" style="display: none;">
+                            <button id="btn-restore-json" class="btn-action restore"><i class="fas fa-upload"></i> Restore (JSON)</button>
+                            
+                            <button id="btn-reset-data" class="btn-danger"><i class="fas fa-trash"></i> Reset Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
